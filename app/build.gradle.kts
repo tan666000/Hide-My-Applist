@@ -23,7 +23,7 @@ plugins {
 // }
 
 android {
-    namespace = "com.tsng.hidemyapplist"
+    namespace = "com.cnm"
 
     buildFeatures {
         buildConfig = true
