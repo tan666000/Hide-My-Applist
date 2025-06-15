@@ -1,6 +1,8 @@
 import com.android.build.api.dsl.Packaging
 import java.util.*
+import java.io.File
 
+// officialBuild 的定義應該來自 rootProject.extra 或者通過 local.properties 注入
 val officialBuild: Boolean by rootProject.extra
 
 plugins {
@@ -12,11 +14,13 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.nav.safeargs.kotlin)
+    // 移除了 alias(libs.plugins.gms.get().pluginId)
 }
 
-if (officialBuild) {
-    plugins.apply(libs.plugins.gms.get().pluginId)
-}
+// 移除了整個 if (officialBuild) 塊，因為它應用了 gms 插件
+// if (officialBuild) {
+//     plugins.apply(libs.plugins.gms.get().pluginId)
+// }
 
 android {
     namespace = "com.tsng.hidemyapplist"
@@ -35,6 +39,43 @@ android {
                 "/kotlin/**",
                 "/okhttp3/**",
             )
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            val properties = Properties()
+            val localPropertiesFile = project.rootProject.file("local.properties")
+            if (localPropertiesFile.exists()) {
+                localPropertiesFile.inputStream().use { properties.load(it) }
+            }
+
+            val keystorePath = properties.getProperty("fileDir") ?: ""
+            if (keystorePath.isEmpty()) {
+                println("WARNING: keystorePath (fileDir) not found in local.properties. Attempting to use default local path 'my-release-key.jks'.")
+                storeFile = file("my-release-key.jks")
+            } else {
+                storeFile = File(keystorePath)
+            }
+
+            storePassword = properties.getProperty("storePassword") ?: System.getenv("KEY_STORE_PASSWORD")
+            keyAlias = properties.getProperty("keyAlias") ?: System.getenv("ALIAS")
+            keyPassword = properties.getProperty("keyPassword") ?: System.getenv("ALIAS_KEY_PASSWORD")
+
+            if (storeFile == null || storePassword == null || keyAlias == null || keyPassword == null) {
+                println("ERROR: Missing signing configuration details for 'release' build type.")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            // ... 保持原樣或根據需要添加其他配置
         }
     }
 }
@@ -80,8 +121,6 @@ materialThemeBuilder {
             }
         }
     }
-    // Add Material Design 3 color tokens (such as palettePrimary100) in generated theme
-    // rikka.material >= 2.0.0 provides such attributes
     generatePalette = true
 }
 
@@ -101,11 +140,14 @@ afterEvaluate {
     afterEval()
 }
 
+// 這是正確的 dependencies 塊語法
 dependencies {
     implementation(projects.common)
     runtimeOnly(projects.xposed)
 
-    implementation(platform(libs.com.google.firebase.bom))
+    // 重新加入 Google Play Services Ads 依賴，以解決 AdMob 相關錯誤
+    implementation(libs.com.google.android.gms.play.services.ads)
+
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.preference.ktx)
@@ -117,8 +159,9 @@ dependencies {
     implementation(libs.com.github.liujingxing.rxhttp.converter.serialization)
     implementation(libs.com.github.topjohnwu.libsu.core)
     implementation(libs.com.google.android.material)
-    implementation(libs.com.google.android.gms.play.services.ads)
-    implementation(libs.com.google.firebase.analytics.ktx)
+    // 移除了 Firebase BOM 和 Firebase Analytics 相關依賴 (保持移除)
+    // implementation(platform(libs.com.google.firebase.bom))
+    // implementation(libs.com.google.firebase.analytics.ktx)
     implementation(libs.com.squareup.okhttp3)
     implementation(libs.dev.rikka.hidden.compat)
     implementation(libs.dev.rikka.rikkax.material)
