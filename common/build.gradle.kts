@@ -23,7 +23,7 @@ plugins {
 // }
 
 android {
-    namespace = "com.tsng.hidemyapplist"
+    namespace = "com.tsng.hidemyapplist" // 請確保此處包名與你的專案實際使用的包名一致
 
     buildFeatures {
         buildConfig = true
@@ -124,30 +124,12 @@ materialThemeBuilder {
     generatePalette = true
 }
 
-fun afterEval() = android.applicationVariants.forEach { variant ->
-    val variantCapped = variant.name.replaceFirstChar { it.titlecase(Locale.ROOT) }
-    val variantLowered = variant.name.lowercase(Locale.ROOT)
+// 已移除 fun afterEval() 函數和 afterEvaluate 塊，以解決循環依賴問題。
 
-    task<Sync>("build$variantCapped") {
-        dependsOn("assemble$variantCapped")
-        from(layout.buildDirectory.dir("outputs/apk/$variantLowered"))
-        into(layout.buildDirectory.dir("apk/$variantLowered"))
-        rename(".*.apk", "HMA-V${variant.versionName}-${variant.buildType.name}.apk")
-    }
-}
-
-afterEvaluate {
-    afterEval()
-}
-
-// 這是正確的 dependencies 塊語法
 dependencies {
     implementation(projects.common)
     runtimeOnly(projects.xposed)
-
-    // 重新加入 Google Play Services Ads 依賴，以解決 AdMob 相關錯誤
     implementation(libs.com.google.android.gms.play.services.ads)
-
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.preference.ktx)
@@ -159,9 +141,6 @@ dependencies {
     implementation(libs.com.github.liujingxing.rxhttp.converter.serialization)
     implementation(libs.com.github.topjohnwu.libsu.core)
     implementation(libs.com.google.android.material)
-    // 移除了 Firebase BOM 和 Firebase Analytics 相關依賴 (保持移除)
-    // implementation(platform(libs.com.google.firebase.bom))
-    // implementation(libs.com.google.firebase.analytics.ktx)
     implementation(libs.com.squareup.okhttp3)
     implementation(libs.dev.rikka.hidden.compat)
     implementation(libs.dev.rikka.rikkax.material)
