@@ -2,7 +2,7 @@ import com.android.build.api.dsl.Packaging
 import java.util.*
 import java.io.File
 
-// officialBuild 的定義應該來自 rootProject.extra 或者通過 local.properties 注入
+// officialBuild 的定義應自 rootProject.extra 或者通過 local.properties 注入
 val officialBuild: Boolean by rootProject.extra
 
 plugins {
